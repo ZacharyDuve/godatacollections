@@ -21,6 +21,9 @@ type rbNode[T any] struct {
 	left, right *rbNode[T]
 	t           T
 	color       rbColor
+	// Using parent as that saves us having to store entire ancesty during insert/deletes
+	// Also allows for easy checks for which path we came down
+	parent *rbNode[T]
 }
 
 func (this *RedBlackTree[K, T]) Contains(k K) bool {
@@ -55,7 +58,7 @@ func (this *RedBlackTree[K, T]) Insert(newT T) error {
 	newKey := this.tToKFunc(newT)
 	// New Node is supposed to be Red
 	newNode := &rbNode[T]{color: red, t: newT}
-	var curGrandParentNode *rbNode[T]
+	// We need to know the parent trust us on this
 	curParentNode := this.root
 
 	// Handle insert as BST at first
@@ -69,24 +72,35 @@ func (this *RedBlackTree[K, T]) Insert(newT T) error {
 		} else if curComp < 0 {
 			// We need to go left since we are less
 			if curParentNode.left == nil {
+				// Found our spot to put the new node
+				// Set the parents left child to our node
 				curParentNode.left = newNode
+				// Set the new node's parent
+				newNode.parent = curParentNode
 				// Once we have set the link than we stop BST insert
 				break
 			} else {
-				curGrandParentNode = curParentNode
 				curParentNode = curParentNode.left
 			}
 		} else {
 			// We need to go right since we are greater
 
 			if curParentNode.right == nil {
+				// Found our spot to put the new node
+				// Set the parents right child to our node
 				curParentNode.right = newNode
+				// Set the new node's parent
+				newNode.parent = curParentNode
 				// Once we have set the link than we stop BST insert
 				break
 			} else {
-				curGrandParentNode = curParentNode
 				curParentNode = curParentNode.right
 			}
 		}
 	}
+
+	// At this point the new node should have been inserted if not duplicate has been found
+	// Need to recolor first
+
+	// Need to handle rotations if recoloring didn't work out well for us
 }
