@@ -46,24 +46,44 @@ func (this *RedBlackTree[K, T]) Contains(k K) bool {
 }
 
 func (this *RedBlackTree[K, T]) Insert(newT T) error {
+	newNode := &rbNode[T]{t: newT}
+	// First insert like a normal BST
+	err := this.insertRBTreeLikeBST(newNode)
+	if err != nil {
+		return err
+	}
+	// At this point the new node should have been inserted if not duplicate has been found
+	// Check if the parent of the node is black or not
+	if newNode.parent != nil && newNode.parent.color == black {
+		// If the parent is black then we are all set
+		return nil
+	}
+	// We have a red parent so we need to do something
+	// Need to recolor first
+
+	// Need to handle rotations if recoloring didn't work out well for us
+}
+
+func (this *RedBlackTree[K, T]) insertRBTreeLikeBST(newNode *rbNode[T]) error {
 	// Inserting as a set we don't want duplicates
 	if this.root == nil {
 		// If we do not have a root node yet
-		this.root = &rbNode[T]{color: black, t: newT}
+		this.root = newNode
+		newNode.color = black
 		// For root just insert as black and return
 		return nil
 	}
 
 	// Otherwise if we have root lets start doing normal BST insertion
-	newKey := this.tToKFunc(newT)
+	newKey := this.tToKFunc(newNode.t)
 	// New Node is supposed to be Red
-	newNode := &rbNode[T]{color: red, t: newT}
+	//newNode := &rbNode[T]{color: red, t: newT}
 	// We need to know the parent trust us on this
-	curParentNode := this.root
+	curNode := this.root
 
 	// Handle insert as BST at first
 	for {
-		curComp := this.keyCompFunc(newKey, this.tToKFunc(curParentNode.t))
+		curComp := this.keyCompFunc(newKey, this.tToKFunc(curNode.t))
 
 		if curComp == 0 {
 			// We have a duplicate
@@ -71,36 +91,56 @@ func (this *RedBlackTree[K, T]) Insert(newT T) error {
 			return errors.New("Unable to insert due to duplicate record")
 		} else if curComp < 0 {
 			// We need to go left since we are less
-			if curParentNode.left == nil {
+			if curNode.left == nil {
 				// Found our spot to put the new node
 				// Set the parents left child to our node
-				curParentNode.left = newNode
+				curNode.left = newNode
 				// Set the new node's parent
-				newNode.parent = curParentNode
+				newNode.parent = curNode
 				// Once we have set the link than we stop BST insert
 				break
 			} else {
-				curParentNode = curParentNode.left
+				curNode = curNode.left
 			}
 		} else {
 			// We need to go right since we are greater
 
-			if curParentNode.right == nil {
+			if curNode.right == nil {
 				// Found our spot to put the new node
 				// Set the parents right child to our node
-				curParentNode.right = newNode
+				curNode.right = newNode
 				// Set the new node's parent
-				newNode.parent = curParentNode
+				newNode.parent = curNode
 				// Once we have set the link than we stop BST insert
 				break
 			} else {
-				curParentNode = curParentNode.right
+				curNode = curNode.right
 			}
 		}
 	}
 
-	// At this point the new node should have been inserted if not duplicate has been found
-	// Need to recolor first
+	// If we made it this far then we did an insert correctly
+	return nil
+}
 
-	// Need to handle rotations if recoloring didn't work out well for us
+func resolveRBTreeInsertViolations[T any](curNode *rbNode[T]) {
+
+	for curNode.parent != nil && curNode.parent.parent != nil {
+		// While we can find an uncle lets keep going
+
+		gParent := curNode.parent.parent
+		var uncle *rbNode[T]
+		if gParent.left == curNode.parent {
+			// Parent is the left node so uncle is on the right
+			uncle = gParent.right
+		} else {
+			// Otherwise the uncle is on the left
+			uncle = gParent.left
+		}
+
+		if uncle == nil || uncle.color == black {
+			// We treat nil refs as black
+
+		}
+	}
 }
