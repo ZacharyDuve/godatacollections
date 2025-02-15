@@ -3,6 +3,9 @@ package tree
 import (
 	"errors"
 	"fmt"
+
+	"github.com/ZacharyDuve/godatacollections"
+	"github.com/ZacharyDuve/godatacollections/stack"
 )
 
 type BST[K, T any] struct {
@@ -139,13 +142,12 @@ func (this *BST[K, T]) Remove(key K) error {
 			// Need to make sure that we return to break the loop
 			return nil
 		}
-		curNodeParent = curNode
 	}
 
 	return fmt.Errorf("unable to delete node with key %v due to it not existing in tree", key)
 }
 
-func (this *BST[K, T]) deleteNode(nodeToBeDeleted, nodeToBeDeletedParent *bstNode[K, T]) *bstNode[K, T] {
+func (this *BST[K, T]) deleteNode(nodeToBeDeleted, nodeToBeDeletedParent *bstNode[K, T]) {
 	if nodeToBeDeleted.left == nil && nodeToBeDeleted.right == nil {
 		// Our node to be deleted has no children there for we just make it disapear
 		if nodeToBeDeleted == this.root {
@@ -189,15 +191,49 @@ func (this *BST[K, T]) deleteNode(nodeToBeDeleted, nodeToBeDeletedParent *bstNod
 		}
 	} else {
 		// The node that we are trying to delete has two children
-		successor, successorParent := this.findSuccessor(nodeToBeDeleted, nodeToBeDeletedParent)
+		successor, successorParent := this.findSuccessor(nodeToBeDeleted)
+		this.succeedDeletedNode2Children(nodeToBeDeleted, nodeToBeDeletedParent, successor, successorParent)
 
 	}
-
 }
 
-func (this *BST[K, T]) findSuccessor(nodeToBeDeleted, nodeToBeDeletedParent *bstNode[K, T]) (successor, successorParent *bstNode[K, T]) {
-	successorParent = nodeToBeDeletedParent
+// Only can get here if our node to be deleted has only two children
+func (this *BST[K, T]) succeedDeletedNode2Children(nodeToDelete, nodeToBeDeletedParent, successor, successorParent *bstNode[K, T]) {
+	// Things that we know at this point about the successor node
+	// - It has only a right child if any children exist
+	// - It is either a direct decendant of the deleted node at which point it right side decendant
+	// - OR it if it isn't a direct decendant then it is the parent's left node
+
+	// First need to handle the special case of if it is root
+	if this.root == nodeToDelete {
+		this.root = successor
+	} else {
+		if nodeToBeDeletedParent.left == nodeToDelete {
+			nodeToBeDeletedParent.left = successor
+		} else {
+			nodeToBeDeletedParent.right = successor
+		}
+	}
+	// Copy away the successors decendants so we don't loose them
+	// Due to knowing that the successor only has a right child from succession rules we don't need to copy the left as that will always be nil
+	oldSuccessorRight := successor.right
+	// Now move the old deleted node's decendants over to the successor
+	successor.left = nodeToDelete.left
+	successor.right = nodeToDelete.right
+
+	if successorParent == nodeToDelete {
+		// If we were direct decentant of the deleted node then successors reattach successor right
+		successor.right = oldSuccessorRight
+	} else {
+		// Our successor was not direct decendant of deleted node
+		// Set successor's old parent's left to oldSuccessor's right
+		successorParent.left = oldSuccessorRight
+	}
+}
+
+func (this *BST[K, T]) findSuccessor(nodeToBeDeleted *bstNode[K, T]) (successor, successorParent *bstNode[K, T]) {
 	successor = nodeToBeDeleted.right
+	successorParent = nodeToBeDeleted
 
 	// Because we chose the right side we need to keep going left after the first right jump
 	// Continue until we can't go left anymore. That last node is our
@@ -207,4 +243,49 @@ func (this *BST[K, T]) findSuccessor(nodeToBeDeleted, nodeToBeDeletedParent *bst
 	}
 
 	return successor, successorParent
+}
+
+func (this *BST[K, T]) Iterator() godatacollections.Iterator[T] {
+	iter := &bstIterator[K, T]{nodeStack: stack.NewDLStack[*bstNode[K, T]](nil), zeroValue: this.zeroValue}
+
+	next := this.root
+
+	for next != nil {
+		iter.nodeStack.Push(next)
+		next = next.left
+	}
+
+	return iter
+}
+
+type bstIterator[K, T any] struct {
+	nodeStack *stack.DLStack[*bstNode[K, T]]
+	zeroValue T
+}
+
+func (this *bstIterator[K, T]) Close() error {
+	return nil
+}
+
+func (this *bstIterator[K, T]) HasNext() bool {
+	return this.nodeStack.Len() > 0
+}
+
+func (this *bstIterator[K, T]) Next() (T, error) {
+	nextRet := this.nodeStack.Pop()
+
+	if nextRet == nil {
+		return this.zeroValue, errors.New("nothing left to iterate over")
+	}
+
+	if nextRet.right != nil {
+		nextAfter := nextRet.right
+
+		for nextAfter != nil {
+			this.nodeStack.Push(nextAfter)
+			nextAfter = nextAfter.left
+		}
+	}
+
+	return nextRet.t, nil
 }
