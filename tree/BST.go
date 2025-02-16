@@ -3,6 +3,7 @@ package tree
 import (
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/ZacharyDuve/godatacollections"
 	"github.com/ZacharyDuve/godatacollections/stack"
@@ -132,16 +133,20 @@ func (this *BST[K, T]) Remove(key K) error {
 
 		if curComp < 0 {
 			// Need to go left
+			curNodeParent = curNode
 			curNode = curNode.left
 		} else if curComp > 0 {
 			// Need to go right
+			curNodeParent = curNode
 			curNode = curNode.right
+
 		} else {
 			// curComp == 0  so we have a match
 			this.deleteNode(curNode, curNodeParent)
 			// Need to make sure that we return to break the loop
 			return nil
 		}
+
 	}
 
 	return fmt.Errorf("unable to delete node with key %v due to it not existing in tree", key)
@@ -160,6 +165,7 @@ func (this *BST[K, T]) deleteNode(nodeToBeDeleted, nodeToBeDeletedParent *bstNod
 				nodeToBeDeletedParent.left = nil
 			} else {
 				// Node is on parent's right
+				log.Printf("Deleting Parent's (key: %v) right", nodeToBeDeletedParent.key)
 				nodeToBeDeletedParent.right = nil
 			}
 		}
