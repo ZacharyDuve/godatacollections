@@ -66,6 +66,8 @@ func TestAddingDuplicateReturnsError(t *testing.T) {
 }
 
 // -------------------------------------- Removing ------------------------------------------
+
+// Root Specific Tests
 func TestRemovingRootDeletesRoot(t *testing.T) {
 	bst := intBST(0)
 
@@ -156,6 +158,7 @@ func TestAddingIn3ValuesAndThenRemovingRootPromotesRightSideNode(t *testing.T) {
 	}
 }
 
+// Blank remove
 func TestRemovingWhenNotingHasBeenAddedReturnsError(t *testing.T) {
 	bst := intBST(0)
 
@@ -163,6 +166,58 @@ func TestRemovingWhenNotingHasBeenAddedReturnsError(t *testing.T) {
 
 	if err == nil {
 		t.Fail()
+	}
+}
+
+// TODO:
+// Add in tests for removing non-root single children and when having both children
+//
+
+// Single child remove non-root node
+
+func TestRemovingNonRootNodeWithSingleLeftChildRemovesNodeAndPromotesChild(t *testing.T) {
+	bst := intBST(-1)
+
+	nodeKeyDelete := 7
+	nodeChildKey := 6
+
+	bst.Insert(5)
+	//This node is to be deleted
+	bst.Insert(nodeKeyDelete)
+	//This should be previouses left child
+	bst.Insert(nodeChildKey)
+
+	if bst.root.right.left.key != nodeChildKey {
+		t.Fatal("Failed to setup correctly")
+	}
+
+	bst.Remove(nodeKeyDelete)
+
+	if bst.root.right.key != nodeChildKey {
+		t.Fatal("Child Failed to be promoted")
+	}
+}
+
+func TestRemovingNonRootNodeWithSingleRightChildRemovesNodeAndPromotesChild(t *testing.T) {
+	bst := intBST(-1)
+
+	nodeKeyDelete := 3
+	nodeChildKey := 4
+
+	bst.Insert(5)
+	//This node is to be deleted
+	bst.Insert(nodeKeyDelete)
+	//This should be previouses left child
+	bst.Insert(nodeChildKey)
+
+	if bst.root.left.right.key != nodeChildKey {
+		t.Fatal("Failed to setup correctly")
+	}
+
+	bst.Remove(nodeKeyDelete)
+
+	if bst.root.left.key != nodeChildKey {
+		t.Fatal("Child Failed to be promoted")
 	}
 }
 
@@ -198,8 +253,87 @@ func TestContainsReturnsFalseAfterItemHasBeenRemovedFromBST(t *testing.T) {
 	}
 }
 
+// -------------------------------------- Get By Key ------------------------------------------
+
+func TestGetByKeyWithNoNodeMatchingReturnsZeroValue(t *testing.T) {
+	zeroValue := -1
+	bst := intBST(zeroValue)
+
+	bst.Insert(4)
+	bst.Insert(8)
+	bst.Insert(5)
+
+	v := bst.GetByKey(2)
+
+	if v != zeroValue {
+		t.Fail()
+	}
+}
+
+func TestGetByKeyWithNodeMatchingReturnsValue(t *testing.T) {
+	zeroValue := -1
+	bst := intBST(zeroValue)
+
+	bst.Insert(4)
+	bst.Insert(8)
+	bst.Insert(5)
+
+	v := bst.GetByKey(8)
+
+	if v != 8 {
+		t.Fail()
+	}
+}
+
 // -------------------------------------- Iterator ------------------------------------------
 
 func TestIteratorReturnsIterator(t *testing.T) {
-	t.Fatal("TEST NOT IMPLEMENTED")
+	values := make([]int, 0)
+
+	for i := 0; i < 1000; i++ {
+		values = append(values, i)
+	}
+
+	bst := intBST(-1)
+
+	for _, curVal := range values {
+		bst.Insert(curVal)
+	}
+
+	iter := bst.Iterator()
+
+	if iter == nil {
+		t.Fail()
+	}
+
+	valuesFromIter := make([]int, 0)
+
+	for iter.HasNext() {
+		curVal, err := iter.Next()
+
+		if err != nil {
+			t.Fail()
+		}
+		valuesFromIter = append(valuesFromIter, curVal)
+	}
+
+	if len(valuesFromIter) != len(values) {
+		t.Fail()
+	}
+
+	for _, curValue := range values {
+		if !containsInSlice(curValue, valuesFromIter) {
+			t.Fatal("Failed to find value from iterator in slice")
+		}
+	}
+}
+
+func containsInSlice[T comparable](t T, ts []T) bool {
+	for _, curT := range ts {
+		if curT == t {
+			return true
+		}
+	}
+
+	return false
 }
