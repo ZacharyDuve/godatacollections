@@ -3,7 +3,6 @@ package stack
 type DLStack[T any] struct {
 	head      *dlStackNode[T]
 	tail      *dlStackNode[T]
-	length    int
 	zeroValue T
 }
 
@@ -27,7 +26,6 @@ func (this *DLStack[T]) Push(newT T) {
 		this.tail.next = newNode
 		this.tail = newNode
 	}
-	this.length = this.length + 1
 }
 
 func (this *DLStack[T]) Pop() T {
@@ -48,11 +46,5 @@ func (this *DLStack[T]) Pop() T {
 		this.tail = oldTail.prev
 	}
 
-	this.length = this.length - 1
-
 	return oldTail.t
-}
-
-func (this *DLStack[T]) Len() int {
-	return this.length
 }

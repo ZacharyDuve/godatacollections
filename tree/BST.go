@@ -75,12 +75,16 @@ func (this *BST[K, T]) Insert(newT T) error {
 		} else if curComp < 0 {
 			if curNode.left == nil {
 				curNode.left = &bstNode[K, T]{key: newKey, t: newT}
+				// We have completed insert so lets break
+				break
 			} else {
 				curNode = curNode.left
 			}
 		} else {
 			if curNode.right == nil {
 				curNode.right = &bstNode[K, T]{key: newKey, t: newT}
+				// We have completed insert so lets break
+				break
 			} else {
 				curNode = curNode.right
 			}
@@ -260,12 +264,15 @@ func (this *BST[K, T]) Iterator() godatacollections.Iterator[T] {
 		iter.nodeStack.Push(next)
 		next = next.left
 	}
+	// Need to ensure that the first value for next is preped
+	iter.prepNext()
 
 	return iter
 }
 
 type bstIterator[K, T any] struct {
 	nodeStack *stack.DLStack[*bstNode[K, T]]
+	next      *bstNode[K, T]
 	zeroValue T
 }
 
@@ -274,18 +281,21 @@ func (this *bstIterator[K, T]) Close() error {
 }
 
 func (this *bstIterator[K, T]) HasNext() bool {
-	return this.nodeStack.Len() > 0
+	return this.next != nil
+}
+
+func (this *bstIterator[K, T]) prepNext() {
+	this.next = this.nodeStack.Pop()
 }
 
 func (this *bstIterator[K, T]) Next() (T, error) {
-	nextRet := this.nodeStack.Pop()
 
-	if nextRet == nil {
+	if this.next == nil {
 		return this.zeroValue, errors.New("nothing left to iterate over")
 	}
 
-	if nextRet.right != nil {
-		nextAfter := nextRet.right
+	if this.next.right != nil {
+		nextAfter := this.next.right
 
 		for nextAfter != nil {
 			this.nodeStack.Push(nextAfter)
@@ -293,5 +303,10 @@ func (this *bstIterator[K, T]) Next() (T, error) {
 		}
 	}
 
-	return nextRet.t, nil
+	retNext := this.next
+
+	// Need to prepare the next value
+	this.prepNext()
+
+	return retNext.t, nil
 }

@@ -28,12 +28,40 @@ func TestBSTStartsEmpty(t *testing.T) {
 	}
 }
 
+func TestBSTReturnsErrorIfMissingKeyCompFunc(t *testing.T) {
+	bst, err := NewBST[int, int](nil, func(i int) int { return i }, -1)
+
+	if err == nil {
+		t.Fail()
+	}
+
+	if bst != nil {
+		t.Fail()
+	}
+}
+
+func TestBSTReturnsErrorIfMissingTToKFunc(t *testing.T) {
+	bst, err := NewBST[int, int](func(i1, i2 int) int { return i1 - i2 }, nil, -1)
+
+	if err == nil {
+		t.Fail()
+	}
+
+	if bst != nil {
+		t.Fail()
+	}
+}
+
 // -------------------------------------- Adding ------------------------------------------
 
 func TestBSTAddingOneOnlyAddsOneItem(t *testing.T) {
 	bst := intBST(0)
 
-	bst.Insert(5)
+	err := bst.Insert(5)
+
+	if err != nil {
+		t.Fatal("expected no error on insert of root node")
+	}
 
 	if bst.root == nil {
 		t.Fail()
@@ -62,6 +90,23 @@ func TestAddingDuplicateReturnsError(t *testing.T) {
 
 	if err == nil {
 		t.Fail()
+	}
+}
+
+func TestAddingChildNodeNonDuplicateReturnsNoError(t *testing.T) {
+	bst := intBST(-1)
+
+	err := bst.Insert(6)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Insert new different node shouldn't return error
+	err = bst.Insert(4)
+
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -139,6 +184,52 @@ func TestRemovingRootsLeftChildRemovesCorrectly(t *testing.T) {
 	}
 }
 
+func TestRemovingRootWhenItHasOneChildOnLeftReplacesRootWithLeftChild(t *testing.T) {
+	bst := intBST(-1)
+
+	rootKey := 5
+	childKey := 2
+	bst.Insert(rootKey)
+	bst.Insert(childKey)
+
+	bst.Remove(rootKey)
+
+	if bst.root.key != childKey {
+		t.Fail()
+	}
+
+	if bst.root.left != nil {
+		t.Fail()
+	}
+
+	if bst.root.right != nil {
+		t.Fail()
+	}
+}
+
+func TestRemovingRootWhenItHasOneChildOnRightReplacesRootWithRightChild(t *testing.T) {
+	bst := intBST(-1)
+
+	rootKey := 5
+	childKey := 7
+	bst.Insert(rootKey)
+	bst.Insert(childKey)
+
+	bst.Remove(rootKey)
+
+	if bst.root.key != childKey {
+		t.Fail()
+	}
+
+	if bst.root.left != nil {
+		t.Fail()
+	}
+
+	if bst.root.right != nil {
+		t.Fail()
+	}
+}
+
 func TestAddingIn3ValuesAndThenRemovingRootPromotesRightSideNode(t *testing.T) {
 	bst := intBST(0)
 
@@ -168,10 +259,6 @@ func TestRemovingWhenNotingHasBeenAddedReturnsError(t *testing.T) {
 		t.Fail()
 	}
 }
-
-// TODO:
-// Add in tests for removing non-root single children and when having both children
-//
 
 // Single child remove non-root node
 
@@ -249,6 +336,32 @@ func TestContainsReturnsFalseAfterItemHasBeenRemovedFromBST(t *testing.T) {
 	bst.Remove(100)
 
 	if bst.Contains(100) {
+		t.Fail()
+	}
+}
+
+func TestContainsWorksForLeftChildNodes(t *testing.T) {
+	bst := intBST(-1)
+
+	leftKey := 25
+	bst.Insert(50)
+
+	bst.Insert(leftKey)
+
+	if !bst.Contains(leftKey) {
+		t.Fail()
+	}
+}
+
+func TestContainsWorksForRightChildNodes(t *testing.T) {
+	bst := intBST(-1)
+
+	leftKey := 75
+	bst.Insert(50)
+
+	bst.Insert(leftKey)
+
+	if !bst.Contains(leftKey) {
 		t.Fail()
 	}
 }
