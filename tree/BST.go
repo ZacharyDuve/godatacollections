@@ -256,7 +256,7 @@ func (this *BST[K, T]) findSuccessor(nodeToBeDeleted *bstNode[K, T]) (successor,
 }
 
 func (this *BST[K, T]) Iterator() godatacollections.Iterator[T] {
-	iter := &bstIterator[K, T]{nodeStack: stack.NewDLStack[*bstNode[K, T]](nil), zeroValue: this.zeroValue}
+	iter := &bstIterator[K, T]{nodeStack: stack.NewLStack[*bstNode[K, T]](nil), zeroValue: this.zeroValue}
 
 	next := this.root
 
@@ -271,7 +271,7 @@ func (this *BST[K, T]) Iterator() godatacollections.Iterator[T] {
 }
 
 type bstIterator[K, T any] struct {
-	nodeStack *stack.DLStack[*bstNode[K, T]]
+	nodeStack *stack.LStack[*bstNode[K, T]]
 	next      *bstNode[K, T]
 	zeroValue T
 }
@@ -285,7 +285,9 @@ func (this *bstIterator[K, T]) HasNext() bool {
 }
 
 func (this *bstIterator[K, T]) prepNext() {
-	this.next = this.nodeStack.Pop()
+
+	// Save to ignore error as we are using a nil value for zero so we can tell when we have reached the end
+	this.next, _ = this.nodeStack.Pop()
 }
 
 func (this *bstIterator[K, T]) Next() (T, error) {

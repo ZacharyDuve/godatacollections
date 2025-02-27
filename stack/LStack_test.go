@@ -7,16 +7,27 @@ import (
 )
 
 func TestDLStackImplementsStack(t *testing.T) {
-	var _ godatacollections.Stack[int] = NewDLStack[int](0)
+	var _ godatacollections.Stack[int] = NewLStack[int](0)
 }
 
 func TestDLStackPoppingOnEmptyStackReturnsZeroValue(t *testing.T) {
 	zeroValue := 666
-	s := NewDLStack(zeroValue)
+	s := NewLStack(zeroValue)
 
-	pVal := s.Pop()
+	pVal, _ := s.Pop()
 
 	if pVal != zeroValue {
+		t.Fail()
+	}
+}
+
+func TestDLStackPoppingOnEmptyStackReturnsError(t *testing.T) {
+	zeroValue := 666
+	s := NewLStack(zeroValue)
+
+	_, err := s.Pop()
+
+	if !godatacollections.IsEmptyError(err) {
 		t.Fail()
 	}
 }
@@ -26,19 +37,24 @@ func TestDLStackMaintainsLIFOOrder(t *testing.T) {
 	first := 7
 	second := 2
 
-	s := NewDLStack(zeroValue)
+	s := NewLStack(zeroValue)
 	s.Push(first)
 	s.Push(second)
+	pV, _ := s.Pop()
 
-	if s.Pop() != second {
+	if pV != second {
 		t.Fail()
 	}
 
-	if s.Pop() != first {
+	pV, _ = s.Pop()
+
+	if pV != first {
 		t.Fail()
 	}
 
-	if s.Pop() != zeroValue {
+	pV, _ = s.Pop()
+
+	if pV != zeroValue {
 		t.Fail()
 	}
 }
