@@ -46,7 +46,6 @@ func NewBST[K, T any](kCompFunc func(K, K) int, tToKFunc func(T) K, tZeroValue T
 }
 
 type bstNode[K, T any] struct {
-	key   K
 	t     T
 	left  *bstNode[K, T]
 	right *bstNode[K, T]
@@ -57,7 +56,7 @@ func (this *BST[K, T]) Insert(newT T) error {
 
 	if this.root == nil {
 		// If we have no root then it is super easy as we just insert
-		this.root = &bstNode[K, T]{key: newKey, t: newT}
+		this.root = &bstNode[K, T]{t: newT}
 		return nil
 	}
 
@@ -69,12 +68,12 @@ func (this *BST[K, T]) Insert(newT T) error {
 	// Going to delay creation of the node until we need it in case we have duplicate
 
 	for curNode != nil {
-		curComp := this.kCompFunc(newKey, curNode.key)
+		curComp := this.kCompFunc(newKey, this.tToKFunc(curNode.t))
 		if curComp == 0 {
 			return fmt.Errorf("unable to insert duplicate T for key %v", newKey)
 		} else if curComp < 0 {
 			if curNode.left == nil {
-				curNode.left = &bstNode[K, T]{key: newKey, t: newT}
+				curNode.left = &bstNode[K, T]{t: newT}
 				// We have completed insert so lets break
 				break
 			} else {
@@ -82,7 +81,7 @@ func (this *BST[K, T]) Insert(newT T) error {
 			}
 		} else {
 			if curNode.right == nil {
-				curNode.right = &bstNode[K, T]{key: newKey, t: newT}
+				curNode.right = &bstNode[K, T]{t: newT}
 				// We have completed insert so lets break
 				break
 			} else {
@@ -97,7 +96,7 @@ func (this *BST[K, T]) Contains(key K) bool {
 	curNode := this.root
 
 	for curNode != nil {
-		curComp := this.kCompFunc(key, curNode.key)
+		curComp := this.kCompFunc(key, this.tToKFunc(curNode.t))
 		if curComp == 0 {
 			return true
 		} else if curComp < 0 {
@@ -110,13 +109,13 @@ func (this *BST[K, T]) Contains(key K) bool {
 	return false
 }
 
-func (this *BST[K, T]) GetByKey(key K) T {
+func (this *BST[K, T]) GetByKey(key K) (T, error) {
 	curNode := this.root
 
 	for curNode != nil {
-		curComp := this.kCompFunc(key, curNode.key)
+		curComp := this.kCompFunc(key, this.tToKFunc(curNode.t))
 		if curComp == 0 {
-			return curNode.t
+			return curNode.t, nil
 		} else if curComp < 0 {
 			curNode = curNode.left
 		} else {
@@ -124,7 +123,7 @@ func (this *BST[K, T]) GetByKey(key K) T {
 		}
 	}
 
-	return this.zeroValue
+	return this.zeroValue, fmt.Errorf("unable to find T with key %v", key)
 }
 
 func (this *BST[K, T]) Remove(key K) error {
@@ -133,7 +132,7 @@ func (this *BST[K, T]) Remove(key K) error {
 	var curNodeParent *bstNode[K, T] = nil
 	curNode := this.root
 	for curNode != nil {
-		curComp := this.kCompFunc(key, curNode.key)
+		curComp := this.kCompFunc(key, this.tToKFunc(curNode.t))
 
 		if curComp < 0 {
 			// Need to go left
@@ -169,7 +168,7 @@ func (this *BST[K, T]) deleteNode(nodeToBeDeleted, nodeToBeDeletedParent *bstNod
 				nodeToBeDeletedParent.left = nil
 			} else {
 				// Node is on parent's right
-				log.Printf("Deleting Parent's (key: %v) right", nodeToBeDeletedParent.key)
+				log.Printf("Deleting Parent's (key: %v) right", this.tToKFunc(nodeToBeDeleted.t))
 				nodeToBeDeletedParent.right = nil
 			}
 		}

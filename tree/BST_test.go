@@ -131,16 +131,16 @@ func TestRemovingRightChildOfRootRemovesChild(t *testing.T) {
 	if bst.root.right != nil {
 		t.Fatal("expect to have pre add of right to not have a right child")
 	}
-	if bst.root.key != 1 {
+	if bst.tToKFunc(bst.root.t) != 1 {
 		t.Fatal("expected root to be key of 1")
 	}
 	bst.Insert(2)
-	if bst.root.key != 1 {
+	if bst.tToKFunc(bst.root.t) != 1 {
 		t.Fatal("root should not have changed")
 	}
 
-	if bst.root.right.key != 2 {
-		t.Fatal("expecter root's right child to have key of 2")
+	if bst.tToKFunc(bst.root.right.t) != 2 {
+		t.Fatal("expected root's right child to have key of 2")
 	}
 
 	if bst.root.right == nil {
@@ -161,26 +161,26 @@ func TestRemovingRootsLeftChildRemovesCorrectly(t *testing.T) {
 	if bst.root.right != nil {
 		t.Fatal("expect to have pre add of right to not have a right child")
 	}
-	if bst.root.key != 1 {
+	if bst.tToKFunc(bst.root.t) != 1 {
 		t.Fatal("expected root to be key of 1")
 	}
 	bst.Insert(0)
-	if bst.root.key != 1 {
+	if bst.tToKFunc(bst.root.t) != 1 {
 		t.Fatal("root should not have changed")
 	}
 
-	if bst.root.left.key != 0 {
-		t.Fatal("expecter root's right child to have key of 2")
+	if bst.tToKFunc(bst.root.left.t) != 0 {
+		t.Fatal("expecter root's left child to have key of 2")
 	}
 
 	if bst.root.left == nil {
-		t.Fatal("expected to have a right child but there was none")
+		t.Fatal("expected to have a left child but there was none")
 	}
 
 	bst.Remove(0)
 
 	if bst.root.left != nil {
-		t.Fatal("expected root's right to have been removed")
+		t.Fatal("expected root's left to have been removed")
 	}
 }
 
@@ -194,7 +194,7 @@ func TestRemovingRootWhenItHasOneChildOnLeftReplacesRootWithLeftChild(t *testing
 
 	bst.Remove(rootKey)
 
-	if bst.root.key != childKey {
+	if bst.tToKFunc(bst.root.t) != childKey {
 		t.Fail()
 	}
 
@@ -217,7 +217,7 @@ func TestRemovingRootWhenItHasOneChildOnRightReplacesRootWithRightChild(t *testi
 
 	bst.Remove(rootKey)
 
-	if bst.root.key != childKey {
+	if bst.tToKFunc(bst.root.t) != childKey {
 		t.Fail()
 	}
 
@@ -242,7 +242,7 @@ func TestAddingIn3ValuesAndThenRemovingRootPromotesRightSideNode(t *testing.T) {
 
 	oldRoot := bst.root
 	// Removes our root
-	bst.Remove(oldRoot.key)
+	bst.Remove(bst.tToKFunc(oldRoot.t))
 
 	if bst.root != oldRoot.right {
 		t.Fail()
@@ -274,13 +274,14 @@ func TestRemovingNonRootNodeWithSingleLeftChildRemovesNodeAndPromotesChild(t *te
 	//This should be previouses left child
 	bst.Insert(nodeChildKey)
 
-	if bst.root.right.left.key != nodeChildKey {
+	//if bst.root.right.left.key != nodeChildKey {
+	if bst.tToKFunc(bst.root.right.left.t) != nodeChildKey {
 		t.Fatal("Failed to setup correctly")
 	}
 
 	bst.Remove(nodeKeyDelete)
 
-	if bst.root.right.key != nodeChildKey {
+	if bst.tToKFunc(bst.root.right.t) != nodeChildKey {
 		t.Fatal("Child Failed to be promoted")
 	}
 }
@@ -297,13 +298,13 @@ func TestRemovingNonRootNodeWithSingleRightChildRemovesNodeAndPromotesChild(t *t
 	//This should be previouses left child
 	bst.Insert(nodeChildKey)
 
-	if bst.root.left.right.key != nodeChildKey {
+	if bst.tToKFunc(bst.root.left.right.t) != nodeChildKey {
 		t.Fatal("Failed to setup correctly")
 	}
 
 	bst.Remove(nodeKeyDelete)
 
-	if bst.root.left.key != nodeChildKey {
+	if bst.tToKFunc(bst.root.left.t) != nodeChildKey {
 		t.Fatal("Child Failed to be promoted")
 	}
 }
@@ -376,9 +377,13 @@ func TestGetByKeyWithNoNodeMatchingReturnsZeroValue(t *testing.T) {
 	bst.Insert(8)
 	bst.Insert(5)
 
-	v := bst.GetByKey(2)
+	v, err := bst.GetByKey(2)
 
 	if v != zeroValue {
+		t.Fail()
+	}
+
+	if err == nil {
 		t.Fail()
 	}
 }
@@ -391,9 +396,13 @@ func TestGetByKeyWithNodeMatchingReturnsValue(t *testing.T) {
 	bst.Insert(8)
 	bst.Insert(5)
 
-	v := bst.GetByKey(8)
+	v, err := bst.GetByKey(8)
 
 	if v != 8 {
+		t.Fail()
+	}
+
+	if err != nil {
 		t.Fail()
 	}
 }
@@ -439,14 +448,4 @@ func TestIteratorReturnsIterator(t *testing.T) {
 			t.Fatal("Failed to find value from iterator in slice")
 		}
 	}
-}
-
-func containsInSlice[T comparable](t T, ts []T) bool {
-	for _, curT := range ts {
-		if curT == t {
-			return true
-		}
-	}
-
-	return false
 }
