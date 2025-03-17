@@ -36,10 +36,29 @@ func (this *AVLTree[K, T]) Insert(t T) error {
 
 func (this *AVLTree[K, T]) insertRec(tToBeInserted T, curNode *avlTreeNode[K, T]) error {
 	if curNode == nil {
-		panic("Should never have gotten to a nil child on an insert")
+		panic("Should never have gotten to a nil curNode on an insert")
 	}
 
-	curComp
+	curComp := this.kCompFunc(this.tToKFunc(tToBeInserted), this.tToKFunc(curNode.t))
+
+	if curComp == 0 {
+		// This is a duplicate node so error since we are inserting
+		return fmt.Errorf("unable to insert duplicated node with key: %v", this.tToKFunc(curNode.t))
+	} else if curComp < 0 {
+		// left side
+		if curNode.left == nil {
+			// insert
+		} else {
+			// keep going
+		}
+	} else {
+		// right
+		if curNode.right == nil {
+			// insert
+		} else {
+			// keep going
+		}
+	}
 }
 
 func (this *AVLTree[K, T]) Remove(key K) error {
