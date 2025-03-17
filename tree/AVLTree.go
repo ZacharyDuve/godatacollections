@@ -23,7 +23,7 @@ type avlTreeNode[K, T any] struct {
 	t T
 	// How balanced the subtree is. Should be at most 1 which means that the left and right
 	// differ in height by at most 1
-	balance uint8
+	balance int8
 	// Pointer to the left child
 	left *avlTreeNode[K, T]
 	// Pointer to the right child
@@ -48,15 +48,24 @@ func (this *AVLTree[K, T]) insertRec(tToBeInserted T, curNode *avlTreeNode[K, T]
 		// left side
 		if curNode.left == nil {
 			// insert
+			// Children ref is nul and balance is 0
+			curNode.left = &avlTreeNode[K, T]{t: tToBeInserted, balance: 0}
+			// Shift the curNodes balance -1 since we have added a left child
+			curNode.balance += -1
 		} else {
 			// keep going
+			this.insertRec(tToBeInserted, curNode.left)
 		}
 	} else {
 		// right
 		if curNode.right == nil {
 			// insert
+			curNode.right = &avlTreeNode[K, T]{t: tToBeInserted, balance: 0}
+			// Shift the curNodes balance +1 since we have added a right child
+			curNode.balance += 1
 		} else {
 			// keep going
+			this.insertRec(tToBeInserted, curNode.right)
 		}
 	}
 }
